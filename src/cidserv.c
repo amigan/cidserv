@@ -32,7 +32,7 @@ int ring = 0, nhosts = 0;
 char hosts[10][18];
 FILE* logfh;
 char* devi;
-static const char rcsid[] = "$Amigan: cidserv/src/cidserv.c,v 1.3 2004/12/23 23:46:03 dcp1990 Exp $";
+static const char rcsid[] = "$Amigan: cidserv/src/cidserv.c,v 1.4 2005/03/13 06:32:21 dcp1990 Exp $";
 int modemfd, sfd;
 struct tm *ct;
 time_t now;
@@ -41,6 +41,7 @@ int evalrc(char* result);
 void send_dgram(char* address, char* datar);
 int parse_cid(char* cidstring);
 void load_addrs(char* fl);
+short unsigned int longformat = 0;
 char* logtime(void)
 {
 	static char tstring[12];
@@ -65,6 +66,7 @@ void brring(void)
 	}
 }
 #endif
+/* old
 static void trap_hup(int nused)
 {
 	fprintf(stderr, 
@@ -99,11 +101,52 @@ static void trap_term(int nused)
 	close(sfd);
 	fclose(logfh);
 	exit(0);
+}*/
+static void trap_sig(int sig)
+{
+	switch(sig) {
+		case SIGHUP:
+			fprintf(logfh,
+				"Caught signal %d\n", sig);
+			fflush(logfh);
+			parse_cid("80190108313232313135303508014F020A3430313437343737343063\n");
+			signal(SIGHUP, SIG_IGN);
+			break;
+		case SIGUSR1:
+			fprintf(logfh,
+				"Caught signal %d\n", sig);
+			parse_cid("802701083039303532303130070F574952454C4553532043414C4C2020020A30303332303532363239AF\n");
+			signal(SIGUSR1, SIG_IGN);
+			break;
+		case SIGUSR2:
+			fprintf(logfh,
+				"Caught signal %d\n", sig);
+			parse_cid("802701083132323130383234070F5354414E444953482048454154494E020A343031333937333337325C\n");
+			signal(SIGUSR2, SIG_IGN);
+			break;
+		case SIGTERM:
+		case SIGINT:
+#ifdef DEBUG
+			fprintf(stderr, 
+				"Caught signal %d, cleaning up...\n", sig);
+#endif
+			fprintf(logfh, "%s Caught signal %d, cleaning up...\n",
+				       logtime(), sig);
+			fflush(logfh);
+			uu_unlock((devi+(sizeof("/dev/")-1)));
+			close(modemfd);
+			close(sfd);
+			fclose(logfh);
+			exit(0);
+			break;
+		default:
+			fprintf(logfh, "Caught signal %d\n", sig);
+	}
 }
 void usage(char* pname)
 {
-	fprintf(stderr, "Usage: %s %s[-D] -d device -l logfile -a addresses\n"
-			"-D to run as daemon (detach)\n%s", pname,
+	fprintf(stderr, "Usage: %s %s[-Df] -d device -l logfile -a addresses\n"
+			"-D to run as daemon (detach)\n-f for long log format\n%s", pname,
 			wantspkr ? "[-s] " : "", 
 			wantspkr ? "-s uses speaker(4) (FreeBSD) when the"
 			" phone rings.\n" : "");
@@ -127,9 +170,9 @@ int main(int argc, char* argv[])
 	char netbuf[256];
 	FD_ZERO(&fds_read);
 #ifdef SPEAKER
-	while ((ch = getopt(argc, argv, "sDd:l:a:")) != -1) {
+	while ((ch = getopt(argc, argv, "sDd:l:a:f")) != -1) {
 #else
-	while ((ch = getopt(argc, argv, "Dd:l:a:")) != -1) {
+	while ((ch = getopt(argc, argv, "Dd:l:a:f")) != -1) {
 #endif
 		switch(ch) {
 			case 'd':
@@ -151,6 +194,9 @@ int main(int argc, char* argv[])
 #endif
 			case 'D':
 				runasd = 1;
+				break;
+			case 'f':
+				longformat = 1;
 				break;
 			default:
 				usage(argv[0]);
@@ -194,11 +240,11 @@ int main(int argc, char* argv[])
 	fflush(logfh);
 	modemfd = open(dev, O_RDWR);
 	lres = uu_lock((dev+(sizeof("/dev/")-1))); 
-	signal(SIGTERM, trap_term);
-	signal(SIGHUP, trap_hup);
-	signal(SIGUSR1, trap_usr1);
-	signal(SIGUSR2, trap_usr2);
-	signal(SIGINT, trap_term);
+	signal(SIGTERM, trap_sig);
+	signal(SIGHUP, trap_sig);
+	signal(SIGUSR1, trap_sig);
+	signal(SIGUSR2, trap_sig);
+	signal(SIGINT, trap_sig);
 	if(lres != 0) {
 		fprintf(stderr, "%s\n", uu_lockerr(lres));
 		exit(-1);
@@ -272,7 +318,7 @@ int main(int argc, char* argv[])
 				{
 					switch(getc(stdin)) {
 						case 'q':
-							trap_term(SIGTERM);
+							trap_sig(SIGTERM);
 							break;
 						case 's':
 							parse_cid("802701083039303532303130070F574952454C4553532043414C4C2020020A30303332303532363239AF\n");
@@ -385,6 +431,7 @@ int parse_cid(char* cidstring)
 	char *p, *datep;
 	int len = 0, i;
 	char finalbuf[1024], msg[512];
+	char printbuf[2048];
 	unsigned char cch;
 	char cbyte, cbyte2;
 	char bytebuf[10];
@@ -400,6 +447,7 @@ int parse_cid(char* cidstring)
 	memset(bytebuf, 0, sizeof bytebuf);
 	memset(date, 0, sizeof date);
 	memset(finalbuf, 0, sizeof(finalbuf));
+	memset(printbuf, 0, sizeof(printbuf) * sizeof(char));
 	if(cidstring[strlen(cidstring)] == '\n')
 		cidstring[strlen(cidstring)] = 0;
 	sz = strlen(cidstring);
@@ -444,10 +492,16 @@ int parse_cid(char* cidstring)
 	cidtime[4] = 0;
 	p += 8;
 	len -= 8;
-	fprintf(logfh, "Date: %s (local %02d/%02d)\nTime: %s (local %02d:%02d)\n",
-			date, ctm->tm_mon+1, ctm->tm_mday, cidtime,
-			ctm->tm_hour, ctm->tm_min);
-	fflush(logfh);
+	if(longformat) {
+		fprintf(logfh, "Date: %s (local %02d/%02d)\nTime: %s (local %02d:%02d)\n",
+				date, ctm->tm_mon+1, ctm->tm_mday, cidtime,
+				ctm->tm_hour, ctm->tm_min);
+		fflush(logfh);
+	} else {
+		snprintf(printbuf, sizeof(printbuf), "%02d:%02d:%02d: L%02d/%02d %s:%s:",
+				ctm->tm_hour, ctm->tm_min, ctm->tm_sec, ctm->tm_mon + 1,
+				ctm->tm_mday, date, cidtime);
+	}
 	while(len && !isprint(*p)) {
 		p++;
 		len--;
@@ -486,8 +540,16 @@ int parse_cid(char* cidstring)
 	       strcpy(phone, "PRIVATE");
 	if(phone[0] == 'O')
 		strcpy(phone, "UNAVAILABLE");
-	fprintf(logfh, "Name: %s\nPhone Number: %s\n*********\n", name, phone);
-	fflush(logfh);
+	if(longformat) {
+		fprintf(logfh, "Name: %s\nPhone Number: %s\n*********\n", name, phone);
+		fflush(logfh);
+	} else {
+		snprintf(printbuf + strlen(printbuf), sizeof(printbuf) - strlen(printbuf) - 1, "%s:%s\n", name, phone);
+	}
+	if(!longformat) {
+		fputs(printbuf, logfh);
+		fflush(logfh);
+	}
 	sprintf(msg, "%s:%s:0:%s:%s", date, cidtime, name, phone);
 #ifdef DEBUG
 	printf("msg will be %s\n", msg);
