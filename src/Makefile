@@ -1,4 +1,5 @@
-CFLAGS=-g -Wall -DSPEAKER 
+CFLAGS=-g -Wall 
+#-DSPEAKER 
 # -DDEBUG
 all: cidserv bcast hex
 cidserv: cidserv.c

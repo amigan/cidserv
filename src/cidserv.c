@@ -20,7 +20,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#define VERSION "0.1"
+#define VERSION "0.2"
 #ifdef SPEAKER
 #include <machine/speaker.h>
 int wantspkr = 1;
@@ -32,6 +32,7 @@ int ring = 0, nhosts = 0;
 char hosts[10][18];
 FILE* logfh;
 char* devi;
+static const char rcsid[] = "$Amigan: cidserv/src/cidserv.c,v 1.2 2004/12/23 23:13:05 dcp1990 Exp $";
 int modemfd, sfd;
 struct tm *ct;
 time_t now;
