@@ -1,3 +1,4 @@
+# $Amigan: cidserv/xcid/src/Makefile,v 1.2 2004/12/23 23:11:50 dcp1990 Exp $
 #gcc -g -I/usr/X11R6/include -L/usr/X11R6/lib -lXt -lX11 -lXaw -o xcid xcid.c network.c wind.c
 CFLAGS=-g -Wall
 CC=gcc
