@@ -1,4 +1,4 @@
-CFLAGS=-g -Wall
+CFLAGS=-g -Wall -DADDRS=\"/usr/local/etc/cidserv.conf\"
 #-DSPEAKER 
 # -DDEBUG
 all: cidserv bcast hex cnd_mgetty

@@ -21,10 +21,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #define VERSION "0.1"
-#define ADDRS "/usr/local/etc/cidserv.conf" /* XXX: change this */
 int nhosts = 0;
 char hosts[10][18];
-static const char rcsid[] = "$Amigan: cidserv/src/cnd_mgetty.c,v 1.1 2005/03/13 06:32:21 dcp1990 Exp $";
+static const char rcsid[] = "$Amigan: cidserv/src/cnd_mgetty.c,v 1.2 2005/03/13 06:36:16 dcp1990 Exp $";
 void send_dgram(char* address, char* datar);
 void load_addrs(const char* fl);
 int parse_cid(char* tty, char* phone, char* name, int dist_r, char* called);
