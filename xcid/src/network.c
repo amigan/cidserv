@@ -40,8 +40,7 @@
 #define PORT 3890
 #define BUFFERL 256
 struct sockaddr_in servsad;
-extern char* servaddr;
-
+char servaddr[256];
 void telluser(char* buf);
 
 void sendtoser(char* txt)
@@ -51,7 +50,7 @@ void sendtoser(char* txt)
 	s = socket(PF_INET, SOCK_DGRAM, 0);
 	bzero(&sin, sizeof sin);
 	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = inet_addr(servaddr);
+	sin.sin_addr = servsad.sin_addr;/*.s_addr = inet_addr(servaddr); */
 #ifdef DEBUG
 	printf("it is %s\n", inet_ntoa(sin.sin_addr));
 #endif
@@ -104,7 +103,7 @@ int start_netloop(void)
 				if(FD_ISSET(sockfd, &fds_read) != 0)
 				{
 					
-					if((nbytes = recvfrom(sockfd, buffer, BUFFERL - 1, 0, (struct sockaddr*)&bcasaddr, &addr_len
+					if((nbytes = recvfrom(sockfd, buffer, BUFFERL - 1, 0, (struct sockaddr*)bcasaddr, &addr_len
 				  			   )) == -1) {
 						perror("recv");
 						exit(-3);
