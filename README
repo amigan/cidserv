@@ -1,0 +1,4 @@
+(C)2004, Dan Ponte. Under the BSD license.
+xcid requires X, obviously (pure Xt).
+Edit the makefile if not on FreeBSD to comment out -DSPEAKER.
+This is pretty hackish. For some debug stuff in either xcid or cidserv, use -DDEBUG in CPPFLAGS.
