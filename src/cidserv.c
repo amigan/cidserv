@@ -32,7 +32,7 @@ int ring = 0, nhosts = 0;
 char hosts[10][18];
 FILE* logfh;
 char* devi;
-static const char rcsid[] = "$Amigan: cidserv/src/cidserv.c,v 1.2 2004/12/23 23:13:05 dcp1990 Exp $";
+static const char rcsid[] = "$Amigan: cidserv/src/cidserv.c,v 1.3 2004/12/23 23:46:03 dcp1990 Exp $";
 int modemfd, sfd;
 struct tm *ct;
 time_t now;
@@ -65,9 +65,32 @@ void brring(void)
 	}
 }
 #endif
-static void trap_signal(int nused)
+static void trap_hup(int nused)
 {
-	fprintf(stderr, "Caught signal %d, cleaning up...\n", nused);
+	fprintf(stderr, 
+		"Caught signal %d\n", nused);
+	fflush(logfh);
+	parse_cid("80190108313232313135303508014F020A3430313437343737343063\n");
+	return;
+}
+static void trap_usr1(int nused)
+{
+	fprintf(stderr, 
+		"Caught signal %d\n", nused);
+	parse_cid("802701083039303532303130070F574952454C4553532043414C4C2020020A30303332303532363239AF\n");
+	return;
+}
+static void trap_usr2(int nused)
+{
+	fprintf(stderr, 
+		"Caught signal %d\n", nused);
+	parse_cid("802701083132323130383234070F5354414E444953482048454154494E020A343031333937333337325C\n");
+	return;
+}
+static void trap_term(int nused)
+{
+	fprintf(stderr, 
+		"Caught signal %d, cleaning up...\n", nused);
 	fprintf(logfh, "%s Caught signal %d, cleaning up...\n",
 		       logtime(), nused);
 	fflush(logfh);
@@ -171,9 +194,11 @@ int main(int argc, char* argv[])
 	fflush(logfh);
 	modemfd = open(dev, O_RDWR);
 	lres = uu_lock((dev+(sizeof("/dev/")-1))); 
-	signal(SIGTERM, trap_signal);
-	signal(SIGHUP, trap_signal);
-	signal(SIGINT, trap_signal);
+	signal(SIGTERM, trap_term);
+	signal(SIGHUP, trap_hup);
+	signal(SIGUSR1, trap_usr1);
+	signal(SIGUSR2, trap_usr2);
+	signal(SIGINT, trap_term);
 	if(lres != 0) {
 		fprintf(stderr, "%s\n", uu_lockerr(lres));
 		exit(-1);
@@ -247,7 +272,7 @@ int main(int argc, char* argv[])
 				{
 					switch(getc(stdin)) {
 						case 'q':
-							trap_signal(SIGTERM);
+							trap_term(SIGTERM);
 							break;
 						case 's':
 							parse_cid("802701083039303532303130070F574952454C4553532043414C4C2020020A30303332303532363239AF\n");
