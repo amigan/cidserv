@@ -26,15 +26,29 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Amigan: cidserv/xcid/src/xcid.c,v 1.3 2004/12/23 23:11:50 dcp1990 Exp $ */
+/* $Amigan: cidserv/xcid/src/xcid.c,v 1.4 2005/05/26 23:40:37 dcp1990 Exp $ */
 #include <stdio.h>
 #include <string.h>
 #include <getopt.h>
 #include <stdlib.h>
+#include <unistd.h>
 char* servaddr;
 int start_netloop (void);
-static const char rcsid[] = "$Amigan: cidserv/xcid/src/xcid.c,v 1.3 2004/12/23 23:11:50 dcp1990 Exp $";
-
+static const char rcsid[] = "$Amigan: cidserv/xcid/src/xcid.c,v 1.4 2005/05/26 23:40:37 dcp1990 Exp $";
+#ifdef USE_XOSD
+#define DEF_XOSD_TIMEOUT 5
+#define DEF_XOSD_COLOUR "green"
+#define DEF_XOSD_VOFFSET 30
+#define DEF_XOSD_FONT "-misc-fixed-medium-r-semicondensed-*-13-*-*-*-c-*-koi8-r"
+int XOSD_VOFFSET = DEF_XOSD_VOFFSET, XOSD_TIMEOUT = DEF_XOSD_TIMEOUT;
+char *XOSD_FONT = DEF_XOSD_FONT;
+char *XOSD_COLOUR = DEF_XOSD_COLOUR;
+#endif
+void usage(void)
+{
+	fprintf(stderr, "Usage: xcid [-c colourname] [-f fontspec] [-o voffset"
+			"] [-t timeoutsecs]\n");
+}
 int
 main (int argc, char *argv[])
 {
@@ -43,6 +57,37 @@ main (int argc, char *argv[])
 		exit(1);
 	}
 	servaddr = strdup(argv[1]); */
+#ifdef USE_XOSD
+	int ch;
+	while ((ch = getopt(argc, argv, "f:t:o:c:")) != -1) {
+		switch(ch) {
+			case 'f':
+				XOSD_FONT = strdup(optarg);
+				break;
+			case 't':
+				XOSD_TIMEOUT = atoi(optarg);
+				if(XOSD_TIMEOUT < 1) XOSD_TIMEOUT = 
+					DEF_XOSD_TIMEOUT;
+				break;
+			case 'o':
+				XOSD_VOFFSET = atoi(optarg);
+				break;
+			case 'c':
+				XOSD_COLOUR = strdup(optarg);
+				break;
+			case '?':
+			default:
+				usage();
+				exit(-1);
+		}
+	}
+	argc -= optind;
+	argv += optind;
+#endif
   start_netloop ();
+#ifdef USE_XOSD
+  free(XOSD_COLOUR);
+  free(XOSD_FONT);
+#endif
   return 0;
 }

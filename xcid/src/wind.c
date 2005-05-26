@@ -35,6 +35,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef USE_XOSD
+#define DEF_XOSD_TIMEOUT 5
+#define DEF_XOSD_COLOUR "green"
+#define DEF_XOSD_VOFFSET 30
+#define DEF_XOSD_FONT "-misc-fixed-medium-r-semicondensed-*-13-*-*-*-c-*-koi8-r"
+#include <xosd.h>
+extern int XOSD_TIMEOUT, XOSD_VOFFSET;
+extern char *XOSD_COLOUR, *XOSD_FONT;
+#endif
 short int tsec = 10;
 typedef struct cis
 {
@@ -160,9 +169,14 @@ telluser (buf)
      char *buf;
 {
   cidinfo cid;
+#ifdef USE_XOSD
+  xosd *osd;
+#endif 
+#ifndef USE_XOSD
+  char *tav[] = { "xcid", NULL };
   char *ltx;
   size_t lent;
-  char *tav[] = { "xcid", NULL };
+#endif
   bzero(&cid, sizeof cid);
   parseinfo (buf, &cid);
   if(cid.name == NULL) return;
@@ -171,15 +185,35 @@ telluser (buf)
 	  cid.name, cid.number, cid.date, cid.time);
 #endif
   if(cid.name == NULL || cid.number == NULL) {return;}
+#ifdef USE_XOSD
+  /* lent += sizeof(" -- \nDate:  -- Time:\n       ");
+  ltx = malloc(lent);
+  memset(ltx, 0, lent);
+  snprintf(ltx, lent, "%s -- %s\nDate: %s -- Time: %s",
+		  cid.name, cid.number, cid.date, cid.time);*/
+  osd = xosd_create(2);
+  xosd_set_font(osd, XOSD_FONT);
+  xosd_set_colour(osd, XOSD_COLOUR);
+  xosd_set_timeout(osd, XOSD_TIMEOUT);
+  xosd_set_pos(osd, XOSD_top);
+  xosd_set_align(osd, XOSD_right);
+  xosd_set_vertical_offset(osd, XOSD_VOFFSET);
+  xosd_set_shadow_offset(osd, 1);
+  xosd_display(osd, 0, XOSD_printf, "%s -- %s", cid.name, cid.number);
+  xosd_display(osd, 1, XOSD_printf, "Date: %s -- Time: %s", cid.date,
+		  cid.time);
+  xosd_wait_until_no_display(osd);
+  xosd_destroy(osd);
+#else
+  lent +=	sizeof ("Name: \nNumber: \nDate: \nTime: \n           ");
   lent =
     sizeof (char) * (strlen (cid.name) + strlen (cid.number) +
-		     strlen (cid.date) + strlen (cid.time) +
-		     sizeof
-		     ("Name: \nNumber: \nDate: \nTime: \n           "));
+		     strlen (cid.date) + strlen (cid.time));
   ltx = (char *) malloc (lent);
   memset (ltx, 0, lent);
   snprintf (ltx, lent, "Name: %s\nNumber: %s\nDate: %s\nTime: %s\n",
 	    cid.name, cid.number, cid.date, cid.time);
   wind (0, tav, ltx);
   free (ltx);
+#endif
 }
