@@ -2,4 +2,7 @@
 xcid requires X, obviously (pure Xt).
 Edit the makefile if not on FreeBSD to comment out -DSPEAKER.
 This is pretty hackish. For some debug stuff in either xcid or cidserv, use -DDEBUG in CPPFLAGS.
+Updates:
 There is now cnd_mgetty, for use with mgetty's cnd-command parameter. No changes in the client are needed for this to work. To use it, change the ADDRS define at the top.
+===========
+xcid can now use xosd (and libxosd). If you don't want to do this, remove -DUSE_XOSD and -lxosd from xcid/src/Makefile.
