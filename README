@@ -1,4 +1,6 @@
-(C)2004, Dan Ponte. Under the BSD license.
+(C)2004-2005, Dan Ponte. Under the BSD license.
+cid distribution v0.2
+
 xcid requires X, obviously (pure Xt).
 Edit the makefile if not on FreeBSD to comment out -DSPEAKER.
 This is pretty hackish. For some debug stuff in either xcid or cidserv, use -DDEBUG in CPPFLAGS.
