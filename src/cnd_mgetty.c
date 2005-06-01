@@ -21,9 +21,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #define VERSION "0.1"
+#define CIDLOG "/var/log/cidserv.log"
 int nhosts = 0;
 char hosts[10][18];
-static const char rcsid[] = "$Amigan: cidserv/src/cnd_mgetty.c,v 1.2 2005/03/13 06:36:16 dcp1990 Exp $";
+static const char rcsid[] = "$Amigan: cidserv/src/cnd_mgetty.c,v 1.3 2005/06/01 00:05:33 dcp1990 Exp $";
 void send_dgram(char* address, char* datar);
 void load_addrs(const char* fl);
 int parse_cid(char* tty, char* phone, char* name, int dist_r, char* called);
@@ -47,7 +48,8 @@ int parse_cid(tty, phone, name, dist_r, called)
 {
 	int i = 0;
 	char msg[512];
-	char fdate[25];
+	char fdate[256];
+	FILE* logf;
 	time_t rnow;
 	struct tm *ctm;
 	memset(msg, 0, sizeof msg);
@@ -60,6 +62,15 @@ int parse_cid(tty, phone, name, dist_r, called)
 	for(i = 0; i <= nhosts; i++) {
 		send_dgram(hosts[i], msg);
 	}
+	logf = fopen(CIDLOG, "a");
+	if(!logf) {
+		perror("fopen " CIDLOG);
+		exit(-1);
+	}
+	memset(fdate, 0, sizeof fdate);
+	strftime(fdate, sizeof(fdate) * sizeof(char), "%H:%M:%S: L%m/%d %m%d:%H%M:", ctm);
+	fprintf(logf, "%s%s:%s\n", fdate, name, phone);
+	fclose(logf);
 	return 0;
 }
 void send_dgram(char* address, char* datar)
