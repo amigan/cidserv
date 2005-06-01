@@ -1,23 +1,20 @@
 #!/usr/bin/perl
 # Parses a log and generates some useless statistics.
-# $Amigan: cidserv/parselog.pl,v 1.1 2004/12/23 23:46:01 dcp1990 Exp $
+# $Amigan: cidserv/parselog.pl,v 1.2 2005/06/01 00:13:20 dcp1990 Exp $
 # (C)2004 Dan Ponte. BSD.
 $logfile = $ARGV[0];
-%stat = ('me' => (phone => '123345', times => 1,),);
-%numstat = (123345 => \$stat{'me'});
+#%stat = ('me' => (phone => '123345', times => 1,),);
+#%numstat = (123345 => \$stat{'me'});
 open(LF, $logfile);
-@cont = <LF>;
-close(LF);
-print "parselog.pl v1.\n";
-foreach(@cont) {
-	if($_ =~ /^Phone Number: ([0-9]+)$/) {
-		$stat{$lnam}{'phone'} = $1;
-		$numstat{$1} = \$stat{$lnam};
-	} elsif ($_ =~ /^Name: (.+)$/) {
-		$stat{$1}{'times'}++;
+print "parselog.pl v2.\n";
+foreach(<LF>) {
+	if($_ =~ /^..:..:..: L[0-9]{2}\/[0-9]{2} (....):(....):(.+):(.+)$/) {
+		my ($dat, $tim, $nam, $phn) = ($1, $2, $3, $4);
+		$stat{$nam}{'name'} = $nam;
+		$stat{$nam}{'phone'} = $phn;
+		$numstat{$phn} = \$stat{$nam};
+		$stat{$nam}{'times'}++;
 		$tottimes++;
-		$stat{$1}{'name'} = $1;
-		$lnam = $1;
 	}
 }
 while(($k, $v) = each(%stat)) {
@@ -29,4 +26,5 @@ while(($k, $v) = each(%stat)) {
 }
 #print "be " . ${${$numstat{$hn}}}{'times'} . "\n";
 print ${${$numstat{$hn}}}{'name'} . " ($hn) called the most times, at $lg.\n";
-print "In total, people called here $tottimes times.\n";
+print "In tottal, people called here $tottimes times.\n";
+close(LF)
