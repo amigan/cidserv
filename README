@@ -9,3 +9,5 @@ Updates:
 There is now cnd_mgetty, for use with mgetty's cnd-command parameter. No changes in the client are needed for this to work. To use it, change the ADDRS define at the top.
 ===========
 xcid can now use xosd (and libxosd). If you don't want to do this, remove -DUSE_XOSD and -lxosd from xcid/src/Makefile.
+===========
+parselog.pl now works with the new logfile format. Have a blast with it, but the verbose output can get annoying without a pager.
