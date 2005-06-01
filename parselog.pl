@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # Parses a log and generates some useless statistics.
-# $Amigan: cidserv/parselog.pl,v 1.2 2005/06/01 00:13:20 dcp1990 Exp $
+# $Amigan: cidserv/parselog.pl,v 1.3 2005/06/01 00:24:10 dcp1990 Exp $
 # (C)2004 Dan Ponte. BSD.
 $logfile = $ARGV[0];
 #%stat = ('me' => (phone => '123345', times => 1,),);
@@ -14,11 +14,14 @@ foreach(<LF>) {
 		$stat{$nam}{'phone'} = $phn;
 		$numstat{$phn} = \$stat{$nam};
 		$stat{$nam}{'times'}++;
+		$stat{$nam}{'lastcall'} = "$dat\@$tim";
 		$tottimes++;
 	}
 }
 while(($k, $v) = each(%stat)) {
 #	print $k . "\n";
+	print "$k (" . ${$v}{'phone'} . ") times == " . ${$v}{'times'} . 
+	" last=" . ${$v}{'lastcall'} . "\n";
 	while(($ok, $ov) = each(%{$v})) {
 		if($ok eq 'times' and $ov > $lg) { $lg = $ov; $hn = ${$v}{'phone'}; }
 #		print $ok . ' = ' . $ov . "\n";
@@ -26,5 +29,5 @@ while(($k, $v) = each(%stat)) {
 }
 #print "be " . ${${$numstat{$hn}}}{'times'} . "\n";
 print ${${$numstat{$hn}}}{'name'} . " ($hn) called the most times, at $lg.\n";
-print "In tottal, people called here $tottimes times.\n";
+print "In total, people called here $tottimes times.\n";
 close(LF)
