@@ -43,6 +43,7 @@
 #include <xosd.h>
 extern int XOSD_TIMEOUT, XOSD_VOFFSET;
 extern char *XOSD_COLOUR, *XOSD_FONT;
+extern int horiz, vert;
 #endif
 short int tsec = 10;
 typedef struct cis
@@ -195,8 +196,8 @@ telluser (buf)
   xosd_set_font(osd, XOSD_FONT);
   xosd_set_colour(osd, XOSD_COLOUR);
   xosd_set_timeout(osd, XOSD_TIMEOUT);
-  xosd_set_pos(osd, XOSD_top);
-  xosd_set_align(osd, XOSD_right);
+  xosd_set_pos(osd, vert ? XOSD_top : XOSD_bottom);
+  xosd_set_align(osd, horiz ? XOSD_right : XOSD_left);
   xosd_set_vertical_offset(osd, XOSD_VOFFSET);
   xosd_set_shadow_offset(osd, 1);
   xosd_display(osd, 0, XOSD_printf, "%s -- %s", cid.name, cid.number);
