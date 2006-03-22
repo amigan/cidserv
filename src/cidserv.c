@@ -1,6 +1,6 @@
 /*
  * Caller ID Server
- * (C)2004, Dan Ponte
+ * (C)2004-2006, Dan Ponte
  * Licensed under the GPL v2
  */
 #include <fcntl.h>
@@ -20,7 +20,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#define VERSION "0.2"
+#define VERSION "0.3"
 #ifdef SPEAKER
 #include <machine/speaker.h>
 int wantspkr = 1;
@@ -32,11 +32,12 @@ int ring = 0, nhosts = 0;
 char hosts[10][18];
 FILE* logfh;
 char* devi;
-static const char rcsid[] = "$Amigan: cidserv/src/cidserv.c,v 1.4 2005/03/13 06:32:21 dcp1990 Exp $";
+static const char rcsid[] = "$Amigan: cidserv/src/cidserv.c,v 1.5 2006/03/22 22:15:23 dcp1990 Exp $";
 int modemfd, sfd;
 struct tm *ct;
 time_t now;
 short error = 0;
+short logrings = 0;
 int evalrc(char* result);
 void send_dgram(char* address, char* datar);
 int parse_cid(char* cidstring);
@@ -145,7 +146,7 @@ static void trap_sig(int sig)
 }
 void usage(char* pname)
 {
-	fprintf(stderr, "Usage: %s %s[-Df] -d device -l logfile -a addresses\n"
+	fprintf(stderr, "Usage: %s %s[-Dfr] -d device -l logfile -a addresses\n"
 			"-D to run as daemon (detach)\n-f for long log format\n%s", pname,
 			wantspkr ? "[-s] " : "", 
 			wantspkr ? "-s uses speaker(4) (FreeBSD) when the"
@@ -170,9 +171,9 @@ int main(int argc, char* argv[])
 	char netbuf[256];
 	FD_ZERO(&fds_read);
 #ifdef SPEAKER
-	while ((ch = getopt(argc, argv, "sDd:l:a:f")) != -1) {
+	while ((ch = getopt(argc, argv, "sDd:l:a:fr")) != -1) {
 #else
-	while ((ch = getopt(argc, argv, "Dd:l:a:f")) != -1) {
+	while ((ch = getopt(argc, argv, "Dd:l:a:fr")) != -1) {
 #endif
 		switch(ch) {
 			case 'd':
@@ -186,6 +187,9 @@ int main(int argc, char* argv[])
 			case 'a':
 				addres = strdup(optarg);
 				addrset = 1;
+				break;
+			case 'r':
+				logrings = 1;
 				break;
 #ifdef SPEAKER
 			case 's':
@@ -406,9 +410,11 @@ int evalrc(char* result)
 		case 2:
 			now = time(NULL);
 			ct = localtime(&now);
-			fprintf(logfh, "%02d:%02d:%02d: Brrrring!!!!!!\n",
-					ct->tm_hour, ct->tm_min, ct->tm_sec);
-			fflush(logfh);
+			if(logrings) {
+				fprintf(logfh, "%02d:%02d:%02d: Brrrring!!!!!!\n",
+						ct->tm_hour, ct->tm_min, ct->tm_sec);
+				fflush(logfh);
+			}
 			for(i = 0; i <= nhosts; i++) {
 				send_dgram(hosts[i], "RING");
 			}
