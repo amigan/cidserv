@@ -32,7 +32,7 @@ int ring = 0, nhosts = 0;
 char hosts[10][18];
 FILE* logfh;
 char* devi;
-static const char rcsid[] = "$Amigan: cidserv/src/cidserv.c,v 1.5 2006/03/22 22:15:23 dcp1990 Exp $";
+static const char rcsid[] = "$Amigan: cidserv/src/cidserv.c,v 1.6 2006/03/22 22:18:44 dcp1990 Exp $";
 int modemfd, sfd;
 struct tm *ct;
 time_t now;
@@ -45,12 +45,13 @@ void load_addrs(char* fl);
 short unsigned int longformat = 0;
 char* logtime(void)
 {
-	static char tstring[12];
+	static char tstring[20];
 	bzero(tstring, sizeof tstring);
 	now = time(NULL);
 	ct = localtime(&now);
-	sprintf(tstring, "%02d:%02d:%02d:",
-			ct->tm_hour, ct->tm_min, ct->tm_sec);
+	sprintf(tstring, "%02d:%02d:%02d: L%02d/%02d",
+			ct->tm_hour, ct->tm_min, ct->tm_sec, ct->tm_mon + 1,
+			ct->tm_mday);
 	return tstring;
 }
 #ifdef SPEAKER
